@@ -1,41 +1,30 @@
 import streamlit as st
 import pandas as pd
 
-# ฟังก์ชันจัดการเรียกใช้งาน Plotly เพื่อป้องกันการ Error บน Cloud
-try:
-    import plotly.express as px
-    import plotly.graph_objects as go
-except ImportError:
-    import os
-    os.system('pip install plotly openpyxl')
-    import plotly.express as px
-    import plotly.graph_objects as go
-
-# ตั้งค่าหน้าเว็บให้แสดงผลเต็มตา สวยงามสไตล์ Data Analyst
+# ตั้งค่าหน้าเว็บให้แสดงผลเต็มจอ สวยงาม
 st.set_page_config(page_title="KPI Engineering Division 2026", layout="wide")
 
 st.title("📊 KPI Engineering Division Dashboard 2026")
-st.markdown("### ระบบประมวลผลข้อมูลและตัวชี้วัดประสิทธิภาพเชิงวิศวกรรมแบบโต้ตอบ (Interactive)")
+st.markdown("### ระบบประมวลผลข้อมูลและตัวชี้วัดประสิทธิภาพเชิงวิศวกรรม")
 st.markdown("---")
 
 # ฐานข้อมูลสรุปเชิงวิเคราะห์ที่สกัดมาจากไฟล์จริงของคุณทั้ง 5 หัวข้อ
 @st.cache_data
 def load_kpi_perfect_data():
     kpi_main = pd.DataFrame({
-        "No": [1, 2, 3, 4, 5, 6, 7, 8],
         "KPI_Name": [
-            "SLA PreCon & Const (Energy Business)", 
-            "SLA PreCon & Const (F&B Business)",
-            "Budget vs Actual Cost (Energy/Non-Energy)", 
-            "Budget vs Actual Cost (F&B)",
-            "Quality Delivery FPY/RFT (Energy/Non-Energy)", 
-            "Quality Delivery FPY/RFT (F&B)",
-            "Internal Budget Control (GP)", 
-            "VA/VE & Cost Avoidance Driven"
+            "1. SLA PreCon & Const (Energy Business)", 
+            "2. SLA PreCon & Const (F&B Business)",
+            "3. Budget vs Actual Cost (Energy/Non-Energy)", 
+            "4. Budget vs Actual Cost (F&B)",
+            "5. Quality Delivery FPY/RFT (Energy/Non-Energy)", 
+            "6. Quality Delivery FPY/RFT (F&B)",
+            "7. Internal Budget Control (GP)", 
+            "8. VA/VE & Cost Avoidance Driven"
         ],
-        "Weight": [20.0, 15.0, 15.0, 20.0, 10.0, 10.0, 5.0, 5.0],
-        "Target_2026": [110.0, 100.0, 105.0, 105.0, 100.0, 100.0, 100.0, 3.50],
-        "Q1_Actual": [132.41, 98.64, 102.42, 102.54, 96.00, 92.50, 100.00, 3.20]
+        "Weight_%": [20.0, 15.0, 15.0, 20.0, 10.0, 10.0, 5.0, 5.0],
+        "Target_2026_%": [110.0, 100.0, 105.0, 105.0, 100.0, 100.0, 100.0, 3.50],
+        "Q1_Actual_%": [132.41, 98.64, 102.42, 102.54, 96.00, 92.50, 100.00, 3.20]
     })
     
     costs = pd.DataFrame({
@@ -43,12 +32,11 @@ def load_kpi_perfect_data():
         "Budget_BOQ": [39735607, 28224966, 32150000, 27184407, 605786, 590253, 646364, 571738],
         "Actual_Cost": [37596009, 26991000, 32500000, 26500000, 604075, 583013, 645964, 565688]
     })
-    costs["Variation"] = costs["Budget_BOQ"] - costs["Actual_Cost"]
     
     savings = pd.DataFrame({
-        "Category": ["VA/VE (ลดการใช้ Sheet Pile)", "Cost Avoidance (งานบำรุงรักษา)", "Gain Liter (มูลค่าสะสมเทียบ GP)"],
-        "Amount": [2245360.00, 6707439.84, 18144000.00]
-    })
+        "Amount_Baht": [2245360.00, 6707439.84, 18144000.00]
+    }, index=["VA/VE (ลดการใช้ Sheet Pile)", "Cost Avoidance (งานบำรุงรักษา)", "Gain Liter (มูลค่าสะสมเทียบ GP)"])
+    
     return kpi_main, costs, savings
 
 df_kpi, df_costs, df_savings = load_kpi_perfect_data()
@@ -66,24 +54,27 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 with tab1:
     st.subheader("📋 สรุปผลคะแนนตัวชี้วัดกลยุทธ์ภาพรวม")
     st.dataframe(df_kpi, use_container_width=True)
-    fig1 = px.bar(df_kpi, x="KPI_Name", y=["Target_2026", "Q1_Actual"], barmode="group", title="เปรียบเทียบเป้าหมาย Target vs ผลงานจริง Q1 Actual (%)")
-    st.plotly_chart(fig1, use_container_width=True)
+    
+    # ใช้กราฟแท่งมาตรฐานของ Streamlit (ไม่ต้องพึ่งพาระบบภายนอก ปลอดภัย 100%)
+    chart_data = df_kpi.set_index("KPI_Name")[["Target_2026_%", "Q1_Actual_%"]]
+    st.bar_chart(chart_data, use_container_width=True)
 
 # --- TAB 2 ---
 with tab2:
     st.subheader("📅 กรอบเวลาการส่งมอบงานก่อสร้าง (SLA Pre-con & Construction)")
     st.info("💡 Insight: กลุ่มธุรกิจพลังงาน (Energy Business) ทำผลงานด้านเวลาได้โดดเด่นที่สุด สูงถึง 132.41% ของเป้าหมายแผนงาน")
-    fig2 = px.bar(df_kpi.iloc[[0, 1]], x="KPI_Name", y="Q1_Actual", color="KPI_Name", text_auto=True)
-    st.plotly_chart(fig2, use_container_width=True)
+    sla_data = df_kpi.iloc[[0, 1]].set_index("KPI_Name")[["Q1_Actual_%"]]
+    st.bar_chart(sla_data, use_container_width=True)
 
 # --- TAB 3 ---
 with tab3:
     st.subheader("💰 ประสิทธิภาพงบประมาณและการเบี่ยงเบนต้นทุนรายโครงการ")
     c1, c2 = st.columns(2)
     c1.metric("งบประมาณรวมที่อนุมัติ (BOQ Approved)", f"{df_costs['Budget_BOQ'].sum():,.2f} บาท")
-    c2.metric("งบประมาณที่เซฟได้รวม (Positive Variance)", f"{df_costs['Variation'].sum():,.2f} บาท")
-    fig3 = px.bar(df_costs, x="Station", y=["Budget_BOQ", "Actual_Cost"], barmode="group", title="งบประมาณเปรียบเทียบค่าใช้จ่ายจริงรายสถานี")
-    st.plotly_chart(fig3, use_container_width=True)
+    c2.metric("ค่าใช้จ่ายที่เกิดขึ้นจริงรวม", f"{df_costs['Actual_Cost'].sum():,.2f} บาท")
+    
+    cost_chart = df_costs.set_index("Station")[["Budget_BOQ", "Actual_Cost"]]
+    st.bar_chart(cost_chart, use_container_width=True)
 
 # --- TAB 4 ---
 with tab4:
@@ -91,15 +82,11 @@ with tab4:
     st.markdown("วัดเปอร์เซ็นต์งานก่อสร้างและรีโนเวทที่ผ่านเกณฑ์แบบ **ไม่มี Major Defect** ตั้งแต่การตรวจงวดแรก")
     for idx, row in df_kpi.iloc[[4, 5]].iterrows():
         st.write(f"📌 **{row['KPI_Name']}**")
-        st.progress(float(row['Q1_Actual']/110))
-        st.caption(f"ผลงานไตรมาสปัจจุบัน: {row['Q1_Actual']}% / เป้าหมายประจำปี: {row['Target_2026']}%")
+        st.progress(float(row['Q1_Actual_%']/110))
+        st.caption(f"ผลงานไตรมาสปัจจุบัน: {row['Q1_Actual_%']}% / เป้าหมายประจำปี: {row['Target_2026_%']}%")
 
 # --- TAB 5 ---
 with tab5:
     st.subheader("🌱 มูลค่าประหยัดจากการทำวิศวกรรมคุณค่า (VA/VE & Cost Saving)")
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        st.plotly_chart(px.pie(df_savings, values="Amount", names="Category", title="สัดส่วนโครงสร้างการลดต้นทุน"), use_container_width=True)
-    with col2:
-        st.plotly_chart(px.bar(df_savings, x="Category", y="Amount", color="Category", text_auto=',.2f', title="มูลค่าตัวเงินสุทธิที่ประหยัดได้ (บาท)"), use_container_width=True)
-    st.success(f"🎉 สรุปความสำเร็จ:  สะสมรวมได้ทั้งสิ้น {df_savings['Amount'].sum():,.2f} บาท")
+    st.bar_chart(df_savings, use_container_width=True)
+    st.success(f"🎉 สรุปความสำเร็จ: ฝ่ายวิศวกรรมสามารถสร้างผลงานประหยัดและหลีกเลี่ยงต้นทุนสะสมรวมได้ทั้งสิ้น {df_savings['Amount_Baht'].sum():,.2f} บาท")
