@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-# ฟังก์ชันจัดการติดตั้งและการเรียกใช้งาน Plotly เพื่อป้องกันการ Error บน Cloud
+# ฟังก์ชันจัดการเรียกใช้งาน Plotly เพื่อป้องกันการ Error บน Cloud
 try:
     import plotly.express as px
     import plotly.graph_objects as go
@@ -21,7 +21,6 @@ st.markdown("---")
 # ฐานข้อมูลสรุปเชิงวิเคราะห์ที่สกัดมาจากไฟล์จริงของคุณทั้ง 5 หัวข้อ
 @st.cache_data
 def load_kpi_perfect_data():
-    # 1. ข้อมูลจาก Strategic KPI (Oil&Non-oil)
     kpi_main = pd.DataFrame({
         "No": [1, 2, 3, 4, 5, 6, 7, 8],
         "KPI_Name": [
@@ -39,7 +38,6 @@ def load_kpi_perfect_data():
         "Q1_Actual": [132.41, 98.64, 102.42, 102.54, 96.00, 92.50, 100.00, 3.20]
     })
     
-    # 2. ข้อมูลสรุปงบประมาณเปรียบเทียบจากไฟล์ Budget vs Actual Cost
     costs = pd.DataFrame({
         "Station": ["ถลาง3 (Oil)", "จักราช2 (Oil)", "บ้านโป่ง9 (Oil)", "วังน้ำเย็น (Oil)", "หาดใหญ่2 (Non-Oil)", "ฝาง2 (Non-Oil)", "แม่กรณ์ (Non-Oil)", "กาญจนบุรี2 (Non-Oil)"],
         "Budget_BOQ": [39735607, 28224966, 32150000, 27184407, 605786, 590253, 646364, 571738],
@@ -47,7 +45,6 @@ def load_kpi_perfect_data():
     })
     costs["Variation"] = costs["Budget_BOQ"] - costs["Actual_Cost"]
     
-    # 3. มูลค่าการประหยัดเงินจากไฟล์ VA/VE และ Cost Avoidance
     savings = pd.DataFrame({
         "Category": ["VA/VE (ลดการใช้ Sheet Pile)", "Cost Avoidance (งานบำรุงรักษา)", "Gain Liter (มูลค่าสะสมเทียบ GP)"],
         "Amount": [2245360.00, 6707439.84, 18144000.00]
@@ -56,7 +53,7 @@ def load_kpi_perfect_data():
 
 df_kpi, df_costs, df_savings = load_kpi_perfect_data()
 
-# สร้างแถบเมนู 5 หัวข้อหลักด้วยระบบจำแนกข้อมูลอัจฉริยะ
+# สร้างแถบเมนู 5 หัวข้อหลัก
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "🎯 1. Overview & Strategic Scorecard",
     "📅 2. Timeline & SLA Performance",
@@ -105,4 +102,4 @@ with tab5:
         st.plotly_chart(px.pie(df_savings, values="Amount", names="Category", title="สัดส่วนโครงสร้างการลดต้นทุน"), use_container_width=True)
     with col2:
         st.plotly_chart(px.bar(df_savings, x="Category", y="Amount", color="Category", text_auto=',.2f', title="มูลค่าตัวเงินสุทธิที่ประหยัดได้ (บาท)"), use_container_width=True)
-    st.success(f"🎉 สรุปความสำเร็จ: ฝ่ายวิศวกรรมสามารถสร้างผลงานประหยัดและหลีกเลี่ยงต้นทุนสะสมรวมได้ทั้งสิ้น {df_savings['Amount'].sum():,.2f} บาท")
+    st.success(f"🎉 สรุปความสำเร็จ:  สะสมรวมได้ทั้งสิ้น {df_savings['Amount'].sum():,.2f} บาท")
